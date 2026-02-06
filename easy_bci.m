@@ -21,7 +21,7 @@ function p = initializeParameters(p, fig)
         
     p.serialPortName = p.handles.dropdown_port.Value;
     p.bufferDuration = p.handles.dropdown_buffdur.Value;
-    p.sampleRate = 500;
+    p.sampleRate = 250;
     p.handlerName = p.handles.dropdown_handler.Value;
     p.DataHandler = str2func(p.handlerName);
     p.collectionMode = p.handles.dropdown_mode.Value;

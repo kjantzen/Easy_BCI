@@ -122,14 +122,14 @@ classdef BCI_ERPplot < handle
           
             %initialize the plot if it does not exist
             if isempty(obj.PlotHandles)
-                %draw a baseline 
-                obj.baseLine = line(obj.PlotAxis, trial.timePnts, zeros(1, length(trial.timePnts)), 'Color', 'k');
-                obj.zeroLine = line(obj.PlotAxis, [0,0], [-1,1], 'Color', 'k');
-                obj.baseLine.Annotation.LegendInformation.IconDisplayStyle = "off";
-                obj.zeroLine.Annotation.LegendInformation.IconDisplayStyle = "off";
+                 %draw a baseline 
+                 obj.baseLine = line(obj.PlotAxis, trial.timePnts, zeros(1, length(trial.timePnts)), 'Color', 'k');
+                 obj.zeroLine = line(obj.PlotAxis, [0,0], [-1,1], 'Color', 'k');
+                 obj.baseLine.Annotation.LegendInformation.IconDisplayStyle = "off";
+                 obj.zeroLine.Annotation.LegendInformation.IconDisplayStyle = "off";
                          
-                %create a time series for the std err
-                tv = [obj.ERP.TimePnts, fliplr(obj.ERP.TimePnts)];
+                 %create a time series for the std err
+                 tv = [obj.ERP.TimePnts, fliplr(obj.ERP.TimePnts)];
                 for ii = 1:3
                     %add the standard error
                     yv = [obj.ERP.ERP(ii,:)+obj.ERP.StdErr(ii,:), fliplr(obj.ERP.ERP(ii,:) - obj.ERP.StdErr(ii,:))];
@@ -139,7 +139,6 @@ classdef BCI_ERPplot < handle
                 obj.PlotHandles = line(obj.PlotAxis, trial.timePnts, obj.ERP.ERP, 'LineWidth', 2);
             end                
 
-            %show or hide the standard error
             for ii = 1:3
                 obj.StdErrHandles(ii).Visible = options.ShowStdErr;
             end

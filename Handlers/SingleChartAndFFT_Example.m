@@ -92,6 +92,6 @@ end
     %the filter object takes as parameters, the sample rate of the data
     %collection, the length of the window to transform (in seconds), and
     %the axis to plot the data in.
-    FFT_length = 5;
+    FFT_length = 1;
     p.fftPlot = BCI_FFTPlot(p.sampleRate, FFT_length, sp);   
 end

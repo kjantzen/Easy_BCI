@@ -1,3 +1,10 @@
+//code for recieving digital triggers from an external
+//serial and sending them to the modified BYB 
+//single channel EEG
+//This code was written for a XIAO RP2040
+//UART 
+//K.J. Jantzen, 2024
+//
 #include <Adafruit_NeoPixel.h>
 
 #define NUMPIXELS 1
@@ -31,22 +38,20 @@ void setup() {
   // put your setup code here, to run once:
   pinMode(TRIG_PIN_1, OUTPUT);
   pinMode(TRIG_PIN_2, OUTPUT);
-
   Serial.begin(9600);
 }
-
 void loop() {
-  // put your main code here, to run repeatedly:
   if (Serial.available()) {
     commandByte = Serial.read();
 
-    //only output something if the current signal changes something
-    trigVal = commandByte & 3;
     digitalWrite(TRIG_PIN_1, (commandByte & 1));
     digitalWrite(TRIG_PIN_2, (commandByte & 2));
     triggerOnsetTime = millis();
     haveTrigger = true;
 
+    //mask out all but the first two bits since
+    //that is all we can use anyway
+    trigVal = commandByte & 3;
     pixels.setPixelColor(0, color[trigVal - 1]);
     pixels.show();
   }

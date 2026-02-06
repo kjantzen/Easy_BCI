@@ -181,6 +181,7 @@ classdef BNS_HBSpiker < handle
 
             %open the serial port
             obj.setPort(port);
+
         end
         function Start(obj)
             %START - starts collecting from the BNS_HBSpiker
@@ -188,9 +189,11 @@ classdef BNS_HBSpiker < handle
             %   obj.Start - Starts collection from an existing BNS_HBSpiker
             %   device
             %
+
             if obj.Collecting
                 error("The device is already running.  Please stop the device before restarting");
             end
+
             %setup the Spikerbox and the serial port for communication
             %based on the current mode of collection
             %

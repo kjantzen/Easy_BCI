@@ -30,7 +30,7 @@ classdef BCI_FFTPlot < handle
                 obj.BufferSeconds = BufferSeconds;
             end
             if nargin < 1 
-                obj.SampleRate = 512;
+                obj.SampleRate = 500;
             else 
                 obj.SampleRate = SampleRate;
             end

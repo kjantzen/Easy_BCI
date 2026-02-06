@@ -155,7 +155,7 @@ end
 %% callback function for single trial data
 function pStruct = trialReadyCallback(~, pStruct, trial)
     
-    fftXRange = [pStruct.fftStart.Value,pStruct.fftEnd.Value];
+   fftXRange = [pStruct.fftStart.Value,pStruct.fftEnd.Value];
    if hasActiveStream(pStruct)
        pStruct.Stream.Save(trial);
        pStruct.bytesSavedTarget.Value = sprintf('%i trials', pStruct.Stream.PacketsWritten);

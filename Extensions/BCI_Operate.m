@@ -122,6 +122,24 @@ classdef BCI_Operate
 
             r = data.^p;
 
+            
+        end
+        function r = Abs(obj, data)
+            %raises each value in data to the power specified in p.  If p
+            %is omitted a power of 2 (squaring) is assumed. 
+            %
+            %Usage
+            %
+            % r = Power(d) - squares each value in d and returns the result
+            % in r.  r and d will be the same size
+            %
+            %r = Power(d, p) raises each value in d to the power p.
+            %
+            %Note, to calculate the nth root pass a value of p that is 1/n
+            %e.g.  r = Power(d, .5) - calculates the square root of d because 1/2 = .5
+
+            r = abs(data);
+
         end
         function [th_flag, th_count, th_first] = Threshold(obj, data, threshold, varargin)
             %determines if the data exceeds a threshold

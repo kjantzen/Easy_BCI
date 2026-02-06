@@ -2,7 +2,7 @@
 // KJ Jantzen
 // V0.1 - Feb - 2023
 // ALlows for operation in two modes: Continuous mode streams data to the host
-// at 500 Hz.  Single trial mode collects data into an internal buffer and 
+// at 250 Hz.  Single trial mode collects data into an internal buffer and 
 // transmits a single trial of data on reciept of a TTL signal on the 
 // expansion pins D9 & D11.
 // In single trial mode, the maximum buffer size at 500 Hz is 1.5 seconds
@@ -25,7 +25,7 @@
 #define RAW_BUFFER_SIZE 100
 #define SIZE_OF_COMMAND_BUFFER 30  //command buffer max size
 #define TRIAL_BUFFER_MAX_SAMPLES 600
-#define SAMPLE_RATE 500
+#define SAMPLE_RATE 250
 
 // defines for setting and clearing register bits
 #ifndef cbi
@@ -43,7 +43,7 @@
 #define TRIG_LED 7
 
 /// Interrupt number - very important in combination with bit rate to get accurate data
-//KJ  - the interrupt (confifgured below) will trigger an interrupt whenever the value in the timer reaches this number
+//KJ  - the interrupt (configured below) will trigger an interrupt whenever the value in the timer reaches this number
 //KJ - It is clear that the base clock rate (16 * 10^6) is being divided by the sample rate to get the number of clock ticks between samples
 //KJ - I am guessing that the same rate is multiplied by 8 to account for the prescaling applied below?
 //KJ - I am not sure why the actual value used by BYB is 198 instead of 199
