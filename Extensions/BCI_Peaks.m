@@ -1,121 +1,122 @@
-classdef BCI_Peaks
+% BCI_Peaks - an object for performing peaks detection on real
+% time data collected with the BNS spiker box,
+% USAGE:
+%   obj = BCI_Peaks() - creates an object using default
+%   parameters
+%
+%   obj = BYB_Peaks(AmpThreshold, WidthThreshold, SmoothPoints,
+%   AdjustThreshold, SearchAcrossChunks)
+%
+%   Optional Inputs
+%
+%   AmpThreshold - when detecting positive peaks, only samples 
+%   that exceed this threshold will be evaluated. Default = 100
+%
+%   WidthThreshold - an integer value indicating the minimum width
+%   of a peak in samples.  For WidthThreshold = n, a peak must be the maximum
+%   absolute value with +- n samples.  Thus the minimum peak width 
+%   is 2* WidthThreshold + 1. Default = 10;
+%
+%   SmoothPoints - number of points to use in smoothing the data
+%   before searching for peaks. Set this value to 0 if no smoothing
+%   is desired.  Default = 0.  For more information see the
+%   Matlab smoothdata function.
+%
+%   AdjustThreshold - perform a crude adjustment to  AmpThreshold 
+%   to account for signal amplitude loss due to smoothing.
+%   Smoothing will reduce the amplitude of sharp peaks in the
+%   data.  if AdjustThreshold = True, the threhsold will be
+%   adjusted down by multiplying it by 
+%   (max(abs(postSmooth))/max(abs(preSmooth)). Default = false.
+%
+%   SearchAcrossChunks - prepends the last (2 * WidthThreshold)
+%   points from the previous data segment to the current data
+%   segment to account for possible undetected peaks at the
+%   very end of the previous segment. Default = true;
+%
+%RETURNS
+%   
+%   Information about identified peaks will be in the structure 
+%   array obj.Peaks.  The array will have
+%   one element per peak identified.  If no peaks were
+%   identified, the array will be empty ([]).
+%   The strucure has the following fields
+%       index - the index or sample into the sample vector at
+%       which the peak was located. A negative index indicated
+%       the peak occured in the previous data segment.
+%       adjvalue - the baseline adjusted value of the sample at the peak.
+%       adjIndex - the index adjusted across all segments evaluated since
+%       creating the object
+%
+% EXAMPLE
+%   %
+%   create a simulated eye blink
+%       Fs = 1000;
+%        Si = 1/Fs;
+%        Duration = 4;
+%        
+%        BlinkFreq = 3;
+%        BlinkTime = 1/BlinkFreq;
+%        
+%        t = 0:Si:Duration -Si;
+%       
+%       d = ones(1,length(t));
+%       
+%       b = sin([0:Si:BlinkTime-Si] * 2 * pi *BlinkFreq);
+%       
+%       insertIndex = round((length(d) - length(b))/2);
+%       range = insertIndex:insertIndex + length(b) -1;
+%       d(range) = d(range) + b;
+%       d(d<1) = (d(d<1)-1) * .2 + 1  ;
+%       plot(t,d);
+%   
+% creates a peak object with a threshold suited to detect only
+% the positive component
+%   p = BYB_Peak(1.3, 10,0, false,false)
+%
+% search for peaks and display the results
+%   p = p.Detect(d);
+%   p.Peaks
+%
+% adjust the threshold so it is suitable for also finding the
+% negative component
+%   p.AmpThreshold = 1.1;
+%   p = p.Detect(d);
+%
+classdef BCI_Peaks < handle
     properties 
         AmpThreshold = 100;
         WidthThreshold = 10;    %default of +- 10 pnts
         SmoothPoints = 0;
         AdjustThreshold = false;
-        SearchAcrossChunks = false;
+        SearchAcrossChunks = true;
         ChunkMemory = 3;
         Peaks = [];
-        HasNew
+        FoundPeaks = false;
+        RemoveBaseline = false;
+        IndexCount = uint64(0); %the cumulative count of indexes reviewed
 
     end
     properties(Access = private)
         Buffer = [];
-        IndexCount = 0; %the cumulative count of indexes reviewed
-
     end
     methods
-        function obj = BCI_Peaks(AmpThreshold, WidthThreshold, SmoothPoints, AdjustThreshold, SearchAcrossChunks)
-            %BYB_Peaks - an object for performing peaks detection on real
-            %time data collected with the BYB spiker box,
-            %USAGE:
-            %   obj = BCI_Peaks() - creates an object using default
-            %   parameters
-            %
-            %   obj = BYB_Peaks(AmpThreshold, WidthThreshold, SmoothPoints,
-            %   AdjustThreshold, SearchAcrossChunks)
-            %
-            %   Optional Inputs
-            %
-            %   AmpThreshold - when detecting positive peaks, only samples 
-            %   that exceed this threshold will be evaluated. Default = 100
-            %
-            %   WidthThreshold - an integer value indicating the minimum width
-            %   of peak in samples.  For WidthThreshold = n, a peak must be the maximum
-            %   absolute value with +- n samples.  Thus the minimum peak width 
-            %   is 2n + 1. Default = 10;
-            %
-            %   SmoothPoints - number of points to use in smoothing the data
-            %   before search for peaks. Set this value to 0 if no smoothing
-            %   is desired.  Default = 0.  For more information see the
-            %   Matlab smoothdata function.
-            %
-            %   AdjustThreshold - perform a crude adjustment to  AmpThreshold 
-            %   to account for signal amplitude loss due to smoothing.
-            %   Smoothing will reduce the amplitude of sharp peaks in the
-            %   data.  if AdjustThreshold = True, the threhsold will be
-            %   adjusted down by multiplying it by 
-            %   (max(abs(postSmooth))/max(abs(preSmooth)). Default = false.
-            %
-            %   SearchAcrossChunks - prepends the last (2 * WidthThreshold)
-            %   points from the previous data segment to the current data
-            %   segment to account for possible undetected peaks at the
-            %   very end of the previous segment. Default = true;
-            %
-            %RETURNS
-            %   
-            %   Information about identified peaks will be in the structure 
-            %   array obj.Peaks.  The array will have
-            %   one element per peak identified.  If no peaks were
-            %   identified, the array will be empty ([]).
-            %   The strucure has the following fields
-            %       index - the index or sample into the sample vector at
-            %       which the peak was located. A negative index indicated
-            %       the peak occured in the previous data segment.
-            %       adjvalue - the baseline adjusted value of the sample at the peak.
-            %
-            % EXAMPLE
-            %   %
-            %   create a simulated eye blink
-            %       Fs = 1000;
-            %        Si = 1/Fs;
-            %        Duration = 4;
-            %        
-            %        BlinkFreq = 3;
-            %        BlinkTime = 1/BlinkFreq;
-            %        
-            %        t = 0:Si:Duration -Si;
-            %       
-            %       d = ones(1,length(t));
-            %       
-            %       b = sin([0:Si:BlinkTime-Si] * 2 * pi *BlinkFreq);
-            %       
-            %       insertIndex = round((length(d) - length(b))/2);
-            %       range = insertIndex:insertIndex + length(b) -1;
-            %       d(range) = d(range) + b;
-            %       d(d<1) = (d(d<1)-1) * .2 + 1  ;
-            %       plot(t,d);
-            %   
-            % creates a peak object with a threshold suited to detect only
-            % the positive component
-            %   p = BYB_Peak(1.3, 10,0, false,false)
-            %
-            % search for peaks and display the results
-            %   p = p.Detect(d);
-            %   p.Peaks
-            %
-            % adjust the threshold so it is suitable for also finding the
-            % negative component
-            %   p.AmpThreshold = 1.1;
-            %   p = p.Detect(d);
-            %
+        function obj = BCI_Peaks(opts)
+           arguments
+              opts.AmpThreshold (1,1) {mustBeNumeric, mustBePositive} = 100 
+              opts.WidthThreshold (1,1) {mustBeInteger, mustBePositive} = 10 
+              opts.SmoothPoints (1,1) {mustBeInteger, mustBeNonnegative} = 0
+              opts.AdjustThreshold (1,1) {mustBeNumericOrLogical} = false 
+              opts.SearchAcrossChunks (1,1) {mustBeNumericOrLogical} = true
+              opts.RemoveBaseline (1,1) {mustBeNumericOrLogical} = false;
+           end
            
-           if nargin > 4
-               obj.SearchAcrossChunks = SearchAcrossChunks;
-           end
-           if nargin > 3
-               obj.AdjustThreshold = AdjustThreshold;
-           end
-           if nargin > 2
-               obj.SmoothPoints = SmoothPoints;
-           end
-           if nargin > 1
-               obj.WidthThreshold = WidthThreshold;
-           end
-           if nargin > 0 
-               obj.AmpThreshold = AmpThreshold;
-           end
+           obj.SearchAcrossChunks = opts.SearchAcrossChunks;
+           obj.AdjustThreshold = opts.AdjustThreshold;
+           obj.SmoothPoints = opts.SmoothPoints;
+           obj.WidthThreshold = opts.WidthThreshold;
+           obj.AmpThreshold = opts.AmpThreshold;
+           obj.RemoveBaseline = opts.RemoveBaseline;
            
         end
     
@@ -129,12 +130,11 @@ classdef BCI_Peaks
             %   vector before searching,  If baseline is excluded the
             %   median of the data will be used
             %
-
-            if nargin < 3
+            if obj.RemoveBaseline
                 baseline = median(data);
+            else 
+                baseline = 0;
             end
-
-
 
            %combine with the previous input chunk if the search across flag
            %is set and if this is not the first chunk
@@ -172,6 +172,11 @@ classdef BCI_Peaks
 
             %find any peaks
             obj.Peaks = obj.findPeaks(tempBuffer,actualThreshold, indexCorrection);
+            if ~isempty(obj.Peaks)
+                obj.FoundPeaks = true;
+            else
+                obj.FoundPeaks = false;
+            end
             obj.IndexCount = obj.IndexCount + length(data);
 
             
@@ -181,19 +186,15 @@ classdef BCI_Peaks
                     obj.Peaks(ii).value = obj.Peaks(ii).adjvalue + baseline;
                 end
             end
-
-        end
- 
+        end 
     end
     methods (Access = private)
-        function peaks = findPeaks(obj, input, ampThresh, indexCorrection)
-        
+        function peaks = findPeaks(obj, input, ampThresh, indexCorrection)        
             %to find the peaks we will loop over all values that exceed the
             %threshold and determine if there is a value within the width 
             % threshold distance that is greater. If not we have found a
             % peak
             
-
             absInput = abs(input);
 
             minPosition = obj.WidthThreshold;
@@ -207,6 +208,7 @@ classdef BCI_Peaks
 
             while ii < maxPosition
                 
+                %move to next iteration if less than threshold
                 if absInput(ii) < ampThresh
                     ii = ii + 1;
                     continue;
@@ -217,16 +219,16 @@ classdef BCI_Peaks
                 
                 %look for the maximum value in that region
                 [~, indx] = max(absInput(searchPoints));
-                indx = indx + min(searchPoints) -1;
+                indx = indx + min(searchPoints) -1; %index of peak in full data array
                 %if the current point is the maximum then it is a peak
-                if indx == ii
+                if any(indx == ii)
                     peak.absindex = obj.IndexCount + ii;  %adjust the index so it is the total offset across segments
                     peak.index = ii - indexCorrection;
                     peak.adjvalue = input(ii);
                     ii = ii + obj.WidthThreshold;
                     peaks = [peaks, peak];
                 else
-                    %if the current point is not the maximum, move the
+                    %if the current point is not the maximum, move to the
                     %maximum point and try again
                     if indx > ii
                         ii = indx;

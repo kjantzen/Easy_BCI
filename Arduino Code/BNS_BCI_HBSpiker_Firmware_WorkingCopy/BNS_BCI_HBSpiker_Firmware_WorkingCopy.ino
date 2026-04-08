@@ -43,12 +43,11 @@
 #define TRIG_LED 7
 
 /// Interrupt number - very important in combination with bit rate to get accurate data
-//KJ  - the interrupt (configured below) will trigger an interrupt whenever the value in the timer reaches this number
+//KJ  - the interrupt (configured below) will trigger whenever the value in the timer reaches this number
 //KJ - It is clear that the base clock rate (16 * 10^6) is being divided by the sample rate to get the number of clock ticks between samples
 //KJ - I am guessing that the same rate is multiplied by 8 to account for the prescaling applied below?
-//KJ - I am not sure why the actual value used by BYB is 198 instead of 199
 // Output Compare Registers  value = (16*10^6) / (Fs*8) - 1  set to 1999 for 1000 Hz sampling, set to 3999 for 500 Hz sampling, set to 7999 for 250Hz sampling, 199 for 10000 Hz Sampling
-#define INTERRUPT_NUMBER 3999
+#define INTERRUPT_NUMBER 7999 
 
 const byte MODE_LED[2] = {5, 7};
 
@@ -356,6 +355,7 @@ void configureTimers() {
 
   //END TIMER SETUP
   //KJ - this is the same as the line above and I have no idea what it is doing
+  //KJ - so I disabled it with seemingly no impact
   //TIMSK1 |= (1 << OCIE1A);
 }
 

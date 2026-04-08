@@ -1,49 +1,45 @@
-classdef BYB_BarPlot
+
+classdef BCI_BarPlot
     properties 
         ax
         Range = [0, 1];
+        AutoRange = true;
         Value = 0;
         Bar = [];
-        
     end
     methods
-        function obj = BYB_BarPlot(plotAxis, varargin)
-            %obj = BYB_barplot(plotAxis): Initializer for the barplotting
-            %object
-            %obj = BYB_barplot(plotAxis, range): Additionally initializes
-            %the plotting range for subsequent data.  Range must be a 1x2
-            %vector of real values with Range(1) < Range(2).
-            %
-            obj.ax = plotAxis;
-  
-        end
-        function obj = set.Value(obj, Value)
-            obj.Value = Value;
-            obj = replot(obj);
-            %b = bar(obj.ax, obj.Value);
-            %obj.ax.YLim = obj.Range;
-            %drawnow();
-          
-        end
-        function obj = set.Range(obj, Range)
-            obj.Range = Range;
-            obj = replot(obj);
-        end
-    end
-    methods (Access = private)
-        function obj = replot(obj)
-            if isempty(obj.Bar)
-                obj.Bar = bar(obj.ax, obj.Value);
-            else
-                obj.Bar.YData = obj.Value;
-                indx = round(64/range(obj.Range) * (obj.Value - obj.Range(1)));
-                if indx < 1; indx = 1;end
-                if indx > 64; indx = 64; end
-                cols = colormap;
-                obj.Bar.FaceColor = cols(indx,:);
+        function obj = BCI_BarPlot(options)
+            arguments
+                options.axisHandle (1,1) matlab.graphics.axis.Axes  = axes()
+                options.XData  = [];
+                options.YData (1,:) = [];
             end
-            obj.ax.YLim = obj.Range;
-            drawnow();
+
+            obj.ax = options.axisHandle;
+
+            %validate and assign data;
+            if isempty(options.YData) 
+                options.YData = ones(1,4);
+                options.XData = 1:length(options.YData);
+            end
+            if isempty(options.XData) || (length(options.XData) ~= length(options.YData))
+                options.XData = 1:length(options.YData);
+            end
+
+            obj.Bar = bar(obj.ax, options.XData, options.YData);
         end
+        function obj = SetYData(obj, y)
+            xdata = obj.Bar.XData;
+            if length(xdata) ~= length(y)
+                obj.Bar.XData = 1:length(y);
+            end
+            obj.Bar.YData = y;
+            if obj.AutoRange
+                obj.ax.YLimMode = 'Auto';
+            else
+                obj.ax.YLim = obj.Range;
+            end
+        end
+ 
     end
 end

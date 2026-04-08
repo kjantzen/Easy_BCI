@@ -4,7 +4,7 @@
 %the appropriate sub function is then called
 %this allows for the creation of any number of single file handlers that
 %can be selected as a single file from a user menu or other interface
-function outStruct = SingleChartAndFFT_Example(inStruct, varargin)
+function outStruct = Example_Single_Chart_And_FFT(inStruct, varargin)
 
 %the initializer is called with only one input variable
     if nargin == 1
@@ -93,5 +93,5 @@ end
     %collection, the length of the window to transform (in seconds), and
     %the axis to plot the data in.
     FFT_length = 1;
-    p.fftPlot = BCI_FFTPlot(p.sampleRate, FFT_length, sp);   
+    p.fftPlot = BCI_FFTPlot(p.sampleRate, "AxisHandle",sp, "BufferSeconds", FFT_length);   
 end

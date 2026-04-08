@@ -15,10 +15,7 @@ end
 %**************************************************************************
 function p = initializeParameters(p, fig)
     %call this function whenever some key parameters list below changes
-
-    %hard code these for now, but give the option to select them from a
-    %user interface later
-        
+    
     p.serialPortName = p.handles.dropdown_port.Value;
     p.bufferDuration = p.handles.dropdown_buffdur.Value;
     p.sampleRate = 250;
@@ -40,11 +37,9 @@ function p = initializeParameters(p, fig)
         if (p.collectionMode == 0)
             p.Device.SetMode(BNS_HBSpikerModes.Continuous);
             p.Device.PacketReceivedCallback = p.DataHandler;
-
         else
             p.Device.SetMode(BNS_HBSpikerModes.SingleTrial);
             p.Device.TrialReceivedCallback = p.DataHandler;
-
         end
     
         %call the initialization version of the data handler, i.e. call it

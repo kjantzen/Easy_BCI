@@ -45,21 +45,18 @@ classdef BCI_Chart < handle
     end
     methods
         function obj = BCI_Chart(SampleRate, ChartLength, plotAxis)
-            if nargin < 3
+            arguments
+                SampleRate (1,1) {mustBeInteger} = 250;
+                ChartLength (1,1) {mustBeNumeric, mustBeNonNegative} = 3;
+                plotAxis = [];
+            end
+            if isempty(plotAxis)
                 f = figure;
                 f.Color = 'w';
                 plotAxis = axes(f);
             end
-            if nargin < 2
-                obj.displaySeconds = 3;
-            else
-                obj.displaySeconds = ChartLength;
-            end
-            if nargin < 1 
-                error('Please provide a valid sample rate...');
-            else 
-                obj.sampleRate = SampleRate;
-            end
+            obj.displaySeconds = ChartLength;
+            obj.sampleRate = SampleRate;
             
             obj.scrolling = false;
             obj.insertPoint = 1;
@@ -67,16 +64,19 @@ classdef BCI_Chart < handle
             obj.tempBuffer = zeros(1,obj.displayPoints);
             obj.tAxis = (1:obj.displayPoints)./SampleRate;
             h1 = line(plotAxis, obj.tAxis, zeros(1,obj.displayPoints));
-          %  h2 = line(plotAxis, obj.tAxis, zeros(1,obj.displayPoints));
             obj.plotHandle =h1; %[h1, h2];
             obj.plotHandle(1).LineWidth = 1;
-           % obj.plotHandle(2).Color = [.8,.3,.7];
-           % obj.plotHandle(2).LineWidth = 1.5;
             
             obj.ax = plotAxis;
                 
         end
         function obj = UpdateChart(obj, eegChunk, eventChunk,  plotRange)
+            arguments
+                obj
+                eegChunk(1,:)
+                eventChunk = []
+                plotRange = []
+            end
             %Adds data the the existing plot for this chart object
             %
             %obj = UpdateChart(d) - adds the timeseries data in d to the
@@ -84,10 +84,25 @@ classdef BCI_Chart < handle
             %
             %obj = UpdateChart(d, scaleRange) - adjust the vertical scale
             %of the axis to the values in 1x2 double array scaleRange. Eg -
-            %to scale between -1 and 2 pass [-1,2] as the scaleRagen
+            %to scale between -1 and 2 pass [-1,2] as the scaleRange
             %parameter
-            
-            if nargin < 4
+            %
+            %Input Parameters
+            %   eegChunk - a timeseries of EEG data to add to the current
+            %   plot
+            %
+            %   eventChunk  - an optional variable indicating timeing of
+            %   event markers in the EEG singla.  If eventChunk is the same
+            %   size as eegChunk, it is assumed that each sample in
+            %   eventChunk matches the timing of each sample it eegChunk.
+            %   Values of 0 indicate that no event is present and values
+            %   other than 0 indicate the presence of an event. If
+            %   evenChunk length does not match that of eegChunk, it is
+            %   assumed that it is a set of n event indexes where n is the
+            %   number of events (length of eventChunk) and the index is
+            %   the location of the event in the current eegChunk.
+          
+            if isempty(plotRange)
                 autoScale = true;
             else
                 autoScale = false;
@@ -95,8 +110,12 @@ classdef BCI_Chart < handle
             ln = length(eegChunk);
             lt = ln ./ obj.sampleRate;
             d = (obj.insertPoint + ln-1) - obj.displayPoints;
-            
-            trigLocations = obj.findTriggerOnsets(double(eventChunk));
+
+            if length(eventChunk) == ln`
+                trigLocations = obj.findTriggerOnsets(double(eventChunk));
+            else
+                trigLocations = eventChunk;
+            end
             dataChunk = eegChunk;%[eegChunk;double(tr)];
             nchans = size(dataChunk,1);
 
@@ -153,13 +172,10 @@ classdef BCI_Chart < handle
                 end
             end
 
-            %axis(obj.ax,'tight');
             if ~autoScale
                 obj.ax.YLim = plotRange;
             end
-            drawnow();
-           
-            
+            drawnow();            
         end
     end
     methods (Access = private)

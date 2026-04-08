@@ -50,7 +50,7 @@ classdef BNS_HBSpiker < handle
         % ProcessObjects - variables, handles or objects the user wants to
         % pass to the InputBufferFilledCallback function when a valid data
         % sample is received. This object just passes them through
-        % untouched amd I may find a less clubky way to store this
+        % untouched amd I may find a less clunky way to store this
         % informaiton in the future
         % Accepted Values - ANY
         ProcessObjects;
@@ -76,12 +76,12 @@ classdef BNS_HBSpiker < handle
         % Collecting - logical flag that indicates if the device is
         % currently collecting data
         % Read only - toggles with calls to obj.Start and obj.Stop
-        Collecting boolean
+        Collecting logical = false
 
         % CollectinMode - indicates if the device is currently in
         % Continuous or Single Trial mode.  Set this variable using the
         % obj.SetMode method
-        CollectionMode integer
+        CollectionMode BNS_HBSpikerModes
 
         % InputBufferFilledCallback - handle to a callback function to
         % which recieved data packets are passed
@@ -208,7 +208,7 @@ classdef BNS_HBSpiker < handle
             %needs time between configuring the port and writing
             pause(1);
             haveHandShake = false;
-            handShakeTimeout = 2;
+            handShakeTimeout = 5;
 
             %send the configuration command to the device
             write(obj.SerialPort, msg, "char");

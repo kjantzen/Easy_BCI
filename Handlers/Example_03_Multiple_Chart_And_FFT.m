@@ -4,7 +4,7 @@
 %the appropriate sub function is then called
 %this allows for the creation of any number of single file handlers that
 %can be selected as a single file from a user menu or other interface
-function outStruct = multipleChartAndFFT(inStruct, varargin)
+function outStruct = Example_03_Multiple_Chart_And_FFT(inStruct, varargin)
 
 %the initializer is called with only one input variable
     if nargin == 1
@@ -91,7 +91,7 @@ end
     %collection, the length of the window to transform (in seconds), and
     %the axis to plot the data in.
     FFT_length = 5;
-    o.fftPlot1 = BCI_FFTPlot(o.sampleRate, FFT_length,sp);
+    o.fftPlot1 = BCI_FFTPlot(o.sampleRate, "AxisHandle",sp, "BufferSeconds", FFT_length);
    
     %create a second plotting object for the filtered time data
     %**********************************************************
@@ -114,6 +114,7 @@ end
     filter_type = 'low'; %this must be one of 'low', 'high', 'bandpass' or 'stop'
     o.filter = BCI_Filter(o.sampleRate, filter_range, filter_type);
     
+    
     %create an fft plotting object to plot the power spectrum of the
     %filtered data
     sp = subplot(3,3,6);
@@ -123,7 +124,7 @@ end
     %collection, the length of the window to transform (in seconds), and
     %the axis to plot the data in.
     FFT_length = 1;
-    o.fftPlot2 = BCI_FFTPlot(o.sampleRate, FFT_length,sp); 
+    o.fftPlot2 = BCI_FFTPlot(o.sampleRate, "AxisHandle",sp, "BufferSeconds",FFT_length); 
    
     
      %create a third plotting object for the rectified time data

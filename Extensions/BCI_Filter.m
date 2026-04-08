@@ -105,7 +105,8 @@ classdef BCI_Filter < handle
                 dataIn = dataIn.*win';
                 obj.z = zeros(obj.FiltOrder, 1); %set to zero so they have no impact
             end
-            [dataOut, obj.z] = filter(obj.b,obj.a,dataIn, obj.z); 
+            dataOut = filtfilt(obj.b, obj.a, dataIn);
+            %[dataOut, obj.z] = filter(obj.b,obj.a,dataIn, obj.z); 
             
         end
     end

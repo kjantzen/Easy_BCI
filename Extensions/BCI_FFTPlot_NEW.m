@@ -8,15 +8,15 @@
 %   Ax.
 %
 %
-classdef BCI_FFTPlot < handle
+classdef BCI_FFTPlot_NEW < handle
     properties 
         FFT         % a BCI_FFT object for handing FFT calculation
         PlotHandle  %the handle to the actual plot
         Axis        % a handle to the plotting axis
-        Units       %contains a string describing the units of the data
+        PlotPower = true;  % use for changing plot type, not currently used.
     end
     methods
-        function obj = BCI_FFTPlot(SampleRate, options)
+        function obj = BCI_FFTPlot_NEW(SampleRate, options)
             arguments
                 SampleRate (1,1) {mustBeInteger} = 500;
                 options.BufferSeconds (1,1) = 1;
@@ -34,16 +34,11 @@ classdef BCI_FFTPlot < handle
                 obj
                 dataChunk (1,:) {mustBeNumeric}
                 options.FreqRange  = 'auto';
-                options.PlotPower (1,1) {mustBeNumericOrLogical} = true;
                 options.PlotLog (1,1) {mustBeNumericOrLogical} = false;
             end
             
             obj.FFT.FFT(dataChunk);
-            if options.PlotPower
-                obj.PlotHandle.YData = obj.FFT.FFTPower;
-            else
-                obj.PlotHandle.YData = obj.FFT.FFTAmplitude;
-            end
+            obj.PlotHandle.YData = obj.FFT.FFTAmplitude;
             if options.PlotLog
                 obj.Axis.YScale = 'log';
             else 

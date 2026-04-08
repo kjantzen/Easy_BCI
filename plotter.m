@@ -13,7 +13,7 @@ function plotter()
    
 end
 % **************************************************************************
-function callback_start(src,~)
+function callback_start(src,~) 
 % starts the data collection process
     fig = ancestor(src, 'figure', 'toplevel');
     p = fig.UserData;

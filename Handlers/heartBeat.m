@@ -10,14 +10,13 @@ end
 function p = analyze(~, p, dStruct)
 
     peaks = zeros(size(dStruct.EEG));
-    data = double(dStruct.EEG)-100;
-    data = p.BPFilt.filter(data);
+    data = dStruct.EEG;
+   % data = p.BPFilt.filter(dStruct.EEG);
+    data = (data.^2)./(600^2);
     p.PeakDetect = p.PeakDetect.Detect(data, 0);
+    p.PeakDetect.Peaks
     if ~isempty(p.PeakDetect.Peaks)
         for ii = 1: length(p.PeakDetect.Peaks)
-            if p.PeakDetect.Peaks(ii).adjvalue < 0 %ignore negative peaks
-                continue
-            end
             p.HBeatIndex(1:end-1) = p.HBeatIndex(2:end);
             p.HBeatIndex(end) = p.PeakDetect.Peaks(ii).absindex;
             if p.PeakDetect.Peaks(ii).index > 0
@@ -26,10 +25,10 @@ function p = analyze(~, p, dStruct)
         end
     
     end
-    
-    
-    p.Chart =  p.Chart.UpdateChart(data, peaks, [-700, 700]);
- 
+   
+    p.Chart =  p.Chart.UpdateChart(dStruct.EEG, [], [-400, 800]);
+    p.ProcessedChart = p.ProcessedChart.UpdateChart(data, peaks, [-.1, 2]);
+
     %calculate the RRInterval for the 60 samples
     RRInterval = diff(p.HBeatIndex)./p.sampleRate;
 
@@ -58,15 +57,25 @@ function p = initialize(p)
     end
     
     %create an axis for plotting the ACG
-    ax = uiaxes(p.handles.outputFigure, 'Position', [10,10,700,580]);
-    ax.XLabel.String = 'Time (s)';
-    ax.YLabel.String = 'Amplitude (mV)';
-    ax.Title.String = 'Electrocardiogram';
-    ax.XLimitMethod = 'tight';
-    ax.Interactions = [];
-    ax.HitTest = false;
-    ax.PickableParts = 'none';
+   
+    ax1 = uiaxes(p.handles.outputFigure, 'Position', [10,10,700,260]);
+    ax1.XLabel.String = 'Time (s)';
+    ax1.YLabel.String = 'Amplitude (mV)';
+    ax1.Title.String = 'Electrocardiogram';
+    ax1.XLimitMethod = 'tight';
+    ax1.Interactions = [];
+    ax1.HitTest = false;
+    ax1.PickableParts = 'none';
 
+
+    ax2 = uiaxes(p.handles.outputFigure, 'Position', [10,300,700,260]);
+    ax2.XLabel.String = 'Time (s)';
+    ax2.YLabel.String = 'Amplitude (mV)';
+    ax2.Title.String = 'Electrocardiogram';
+    ax2.XLimitMethod = 'tight';
+    ax2.Interactions = [];
+    ax2.HitTest = false;
+    ax2.PickableParts = 'none';
 
     uilabel('Parent', p.handles.outputFigure,...
         'Position', [750, 450, 200, 20],...
@@ -88,15 +97,15 @@ function p = initialize(p)
     
     
     %create a chart oobject that uses the axis
-    p.Chart = BCI_Chart(p.sampleRate,5, ax);
-    
+    p.Chart = BCI_Chart(p.sampleRate,5, ax1);
+    p.ProcessedChart = BCI_Chart(p.sampleRate,5, ax2);
+
     %create a peak detection object
-    p.PeakDetect = BCI_Peaks(200, 5, 5, false, true);
-    
+    p.PeakDetect = BCI_Peaks("AmpThreshold",.5, "SmoothPoints",5 ...
+        , "WidthThreshold",10, "AdjustThreshold",true, "SearchAcrossChunks",true);
     %create a lowpass filter
-    p.BPFilt = BCI_Filter(p.sampleRate, [0, 30], 'low');
-    
-    
+    p.BPFilt = BCI_Filter(p.sampleRate, [0, 20], 'low');
+        
     %initialize a variable to hold information about when a peak occured
     p.HBeatIndex = zeros(1,30);
 
