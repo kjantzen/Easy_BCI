@@ -113,10 +113,8 @@ classdef BCI_Chart < handle
 
             if length(eventChunk) == ln
                 trigLocations = obj.findTriggerOnsets(double(eventChunk));
-                plotText = true;
             else
                 trigLocations = eventChunk;
-                plotText = false;
             end
             dataChunk = eegChunk;%[eegChunk;double(tr)];
             nchans = size(dataChunk,1);
@@ -169,11 +167,8 @@ classdef BCI_Chart < handle
             if ~isempty(trigLocations)
                 for ii = 1:length(trigLocations)
                     xp = TrigMin + (trigLocations(ii)/obj.sampleRate);
+                    text(obj.ax, xp, obj.ax.YLim(2), num2str(eventChunk(trigLocations(ii)+1)), 'VerticalAlignment','top', 'Tag', 'trigtext');
                     line(obj.ax, [xp, xp], obj.ax.YLim, 'Color', 'r', 'Tag', 'trigger');
-                    if plotText
-                        text(obj.ax, xp, obj.ax.YLim(2), num2str(eventChunk(trigLocations(ii)+1)), 'VerticalAlignment','top', 'Tag', 'trigtext');
-                    end
-
                 end
             end
 

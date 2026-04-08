@@ -14,16 +14,12 @@ function p = analyze(~, p, dStruct)
    % data = p.BPFilt.filter(dStruct.EEG);
     data = (data.^2)./(600^2);
     p.PeakDetect = p.PeakDetect.Detect(data, 0);
-    p.PeakDetect.Peaks
     if ~isempty(p.PeakDetect.Peaks)
+        peaks = [p.PeakDetect.Peaks.index];
         for ii = 1: length(p.PeakDetect.Peaks)
             p.HBeatIndex(1:end-1) = p.HBeatIndex(2:end);
             p.HBeatIndex(end) = p.PeakDetect.Peaks(ii).absindex;
-            if p.PeakDetect.Peaks(ii).index > 0
-                peaks(p.PeakDetect.Peaks(ii).index) = sign(p.PeakDetect.Peaks(ii).adjvalue);
-            end
         end
-    
     end
    
     p.Chart =  p.Chart.UpdateChart(dStruct.EEG, [], [-400, 800]);
