@@ -10,7 +10,7 @@ classdef BCI_TrialBuffer < handle
     %
     % Parameters:
     %   'TrialDuration'=duration sets the length of the trial buffer to 
-    %       durations seconds.
+    %       duration seconds.
     %   'TrialSamples'=samples sets the number of samples to collect in the
     %       trial buffer.  When both TrialDuration and TrialSamples is
     %       provided, TrialSamples will take precedence.
@@ -27,7 +27,7 @@ classdef BCI_TrialBuffer < handle
     %
     properties (SetAccess = private)
         TrialDuration     %the length of the trial in seconds
-        TrialSamples    %the number of samples in the
+        TrialSamples    %the number of samples in the buffer
         SampleRate = 500 %rate at which the data are sampled
         CurrentSamples = 0 %keeps track of the current samples in the trial
         HasCompleteTrial = false;
@@ -52,6 +52,7 @@ classdef BCI_TrialBuffer < handle
             else
                 obj.TrialSamples = round(options.Duration * obj.SampleRate);
             end
+
             obj.TrialDuration = obj.TrialSamples/obj.SampleRate;
             obj.TrialBuffer = zeros(2, obj.TrialSamples);
             obj.WaitForTrigger = options.WaitForTrigger;
@@ -67,7 +68,7 @@ classdef BCI_TrialBuffer < handle
         % 
         % If the trial buffer is empty (has a new trial) and the
         % WaitForTrigger flag is true, AddPacket will check the
-        % packet.Event vector for the first instance of thetrigger specified
+        % packet.Event vector for the first instance of the trigger specified
         % by obj.TriggerValue.  If obj.TriggerValue is found the data will
         % be added starting at the sample at which it is found and extending
         % to the end of the packet.  If obj.TriggerValue is not found, no

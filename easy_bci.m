@@ -214,14 +214,14 @@ end
 fid = fopen(newFile, 'wt');
   
 
-fprintf(fid, '%%Generic data handler template\n\n');
+fprintf(fid, '%%Generic data handler template\n');
 fprintf(fid, 'function outStruct = %s(inStruct, varargin)\n', scriptName);
 fprintf(fid, '\tif nargin == 1\n');
 fprintf(fid, '\t\toutStruct = initialize(inStruct);\n');
 fprintf(fid, '\telse\n\t\toutStruct = analyze(inStruct, varargin{1}, varargin{2});\n\tend\nend\n');
 fprintf(fid, '%%this function gets called when data is passed to the handler\n');
-fprintf(fid, 'function p = analyze(p,data, event)\n\n\t%%your analysis code goes here\nend\n\n');
-fprintf(fid, '%%this function gets called when the analyse process is initialized\n');
+fprintf(fid, 'function p = analyze(p,data, event)\n\n\t%%your analysis code goes here\nend\n');
+fprintf(fid, '%%this function gets called when the handler is initialized\n');
 fprintf(fid, 'function p = initialize(p)\n\n%%your initialization code goes here\n\nend\n');
 
 fclose(fid);
@@ -230,8 +230,6 @@ edit(newFile);
 end
 % *************************************************************************
 function  callback_port_menu(src, evt, fig)
-%    fig = ancestor(src, 'figure', 'toplevel');
-
     %get all the stored data from the figures user data storage
     p = fig.UserData;
 
@@ -399,8 +397,8 @@ function h = buildUI()
         'ItemsData',[0,1]);
   
       % the handler panel
-    panelHeight = 60;
-    btm_pos = ip(4) - 240;
+    panelHeight = 120;
+    btm_pos = ip(4) - 300;
 
     h.panel_handler = uipanel('parent', h.fig,...
         'Position', [5, btm_pos, wdth-10,panelHeight],...
@@ -411,19 +409,29 @@ function h = buildUI()
         'FontName', guiScheme.Panel.Font.Value,...
         'BorderType','none')   ; 
   
-    btm_pos = 5;
+    %btm_pos = 5;
     h.dropdown_handler = uidropdown('Parent',h.panel_handler,...
-        'Position', [5, btm_pos,  wdth-15, 25],...
+        'Position', [5, 55,  wdth-15, 25],...
         'BackgroundColor',guiScheme.Dropdown.BackgroundColor.Value,...
         'FontColor',guiScheme.Dropdown.FontColor.Value,...
         'FontName', guiScheme.Dropdown.Font.Value,...
         'FontSize', guiScheme.Dropdown.FontSize.Value,...
-        'Placeholder','serial port',...
+        'Placeholder','handlers',...
         'Items',getHandlerNames);
+
+    h.button_new_handler = uibutton('Parent',h.panel_handler,...
+        'Position', [5, 5,  wdth-15, guiScheme.Button.Height.Value],...
+       'BackgroundColor',guiScheme.Button.BackgroundColor.Value,...
+        'FontColor', guiScheme.Button.FontColor.Value, ...
+        'FontSize', guiScheme.Button.FontSize.Value,...
+        'Fontname', guiScheme.Button.Font.Value,...
+        'Text','New Handler',...
+        'ButtonPushedFcn',{@callback_newHandlerFile});
+
   
     %the control panel
     panelHeight = 150;
-    btm_pos = ip(4) - 420;
+    btm_pos = btm_pos - 180;
 
     h.panel_control = uipanel('parent', h.fig,...
         'Position', [5, btm_pos, wdth-10,panelHeight],...
@@ -465,7 +473,7 @@ function h = buildUI()
 
       %the status panel
     panelHeight = 60;
-    btm_pos = ip(4) - 510;
+    btm_pos = btm_pos - 100;
 
     h.panel_status = uipanel('parent', h.fig,...
         'Position', [5, btm_pos, wdth-10,panelHeight],...

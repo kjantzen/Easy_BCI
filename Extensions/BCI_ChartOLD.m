@@ -40,9 +40,7 @@ classdef BCI_Chart < handle
         ax
     end
     properties (Access = private)
-        EventMarkerHandles = gobjects(0);
-        DataBuffer
-        EventBuffer
+        eventHandle
     end
     methods
         function obj = BCI_Chart(SampleRate, ChartLength, plotAxis)
@@ -59,8 +57,8 @@ classdef BCI_Chart < handle
             obj.displaySeconds = ChartLength;
             obj.sampleRate = SampleRate;
             
-            %obj.scrolling = false;
-            %obj.insertPoint = 1;
+            obj.scrolling = false;
+            obj.insertPoint = 1;
             obj.displayPoints = obj.displaySeconds * SampleRate;
             obj.tAxis = (1:obj.displayPoints)./SampleRate;
             h1 = line(plotAxis, obj.tAxis, zeros(1,obj.displayPoints));
@@ -68,11 +66,6 @@ classdef BCI_Chart < handle
             obj.plotHandle(1).LineWidth = 1;
             
             obj.ax = plotAxis;
-
-            %create circular data buffers.  One for the data and one for
-            %the events.
-            obj.DataBuffer = BCI_CircBuffer("SampleRate",SampleRate, "BufferSamples", obj.displayPoints);
-            obj.EventBuffer = BCI_CircBuffer("SampleRate",SampleRate, "BufferSamples", obj.displayPoints);
                 
         end
         function obj = UpdateChart(obj, eegChunk, eventChunk,  plotRange)
@@ -112,89 +105,93 @@ classdef BCI_Chart < handle
             else
                 autoScale = false;
             end
-            
-            ln = length(eegChunk); %length of new data in samples
+            ln = length(eegChunk);
+            lt = ln ./ obj.sampleRate;
+            d = (obj.insertPoint + ln-1) - obj.displayPoints;
 
-            %check if the event array is the same length as the data array
             if length(eventChunk) == ln
-                %if yes we assume that the event array is a time signal and
-                %convert them to indexes of onsets
-                eventChunk = obj.findTriggerOnsets(double(eventChunk));
-            end
-            
-            %then we convert it to a time signal the same size as the eeg
-            %signal and populate with the events
-            trigLocations = zeros(1,ln);
-            trigLocations(eventChunk(eventChunk>0)) = 1;
-           
-            %now we manually insert any events that have negative indexes.
-            %Negative indexes indicate that the event was in a previous
-            %data chunk which can happen with the peak picking algorithm
-            offset = obj.EventBuffer.WritePosition-1;
-            for ii = trigLocations(trigLocations<0)
-                obj.EventBuffer.SetValue(offset + ii, 1);
-            end
-            
-            %add incoming data to the circular buffers
-            obj.DataBuffer.WriteBuffer(eegChunk);
-            obj.EventBuffer.WriteBuffer(trigLocations);
-            
-            %update the plot y data with the new ordered data
-            obj.plotHandle.YData = obj.DataBuffer.Buffer;
-
-            %update the time axis information data
-            obj.plotHandle.XData = obj.DataBuffer.TimeAxis;
-
-            %update the event markers
-            eventIndx =  find(obj.EventBuffer.Buffer);
-            tData = obj.EventBuffer.TimeAxis;
-
-            if isempty(obj.EventMarkerHandles)
-                nMarkerHandles = 0;
+                trigLocations = obj.findTriggerOnsets(double(eventChunk));
+                plotText = true;
             else
-                nMarkerHandles = length(obj.EventMarkerHandles);
+                trigLocations = eventChunk;
+                plotText = false;
             end
+            dataChunk = eegChunk;%[eegChunk;double(tr)];
+            nchans = size(dataChunk,1);
 
-            %plot vertical lines by either reusing old handles or creating
-            %new ones. 
-            if ~isempty(eventIndx)
-                for ii = 1:length(eventIndx)
-                    if ii <= nMarkerHandles
-                        obj.EventMarkerHandles(ii).Value = tData(eventIndx(ii));
-                        obj.EventMarkerHandles(ii).Label = obj.EventBuffer.Buffer(eventIndx(ii));
-                        obj.EventMarkerHandles(ii).Visible = true;
-                    else
-                        obj.EventMarkerHandles(ii) = xline(obj.ax, tData(eventIndx(ii)),'Color','r','Label', obj.EventBuffer.Buffer(eventIndx(ii)));
-                    end
+
+            if obj.scrolling 
+                %remove any trigger lines that are to the left of the
+                %current window.
+                trLine = findobj(obj.ax.Children, 'Tag', 'trigger');
+                for ii = 1:length(trLine)
+                    dt = trLine(ii).XData(1) - (obj.plotHandle(1).XData(1)+lt);
+                    if (dt <= 0); delete(trLine(ii)); end
+                end
+                %remove any trigger text that is to the left of the current
+                %window
+                trLine = findobj(obj.ax.Children, 'Tag', 'trigtext');
+                for ii = 1:length(trLine)
+                    dt = trLine(ii).Position(1) - (obj.plotHandle(1).XData(1)+lt);
+                    if (dt <= 0); delete(trLine(ii)); end
                 end
 
-            else
-                ii = 0;
+                TrigMin = obj.plotHandle(1).XData(end);
+                for ii = 1:nchans    
+                    obj.plotHandle(ii).YData(1:obj.displayPoints-ln) = obj.plotHandle(ii).YData(ln+1:end);
+                    obj.plotHandle(ii).YData(obj.displayPoints-ln+1:obj.displayPoints) = dataChunk(ii,:);
+                    obj.plotHandle(ii).XData = obj.plotHandle(ii).XData + lt;
+                    
+                end             
+                   
+            elseif d<=0
+                for ii = 1:nchans
+                    obj.plotHandle(ii).YData(obj.insertPoint: obj.insertPoint + ln-1) = dataChunk(ii,:);
+                    obj.plotHandle(ii).YData(obj.insertPoint + ln: end) = mean(dataChunk(ii,:));
+                end
+                TrigMin = obj.plotHandle(1). XData(obj.insertPoint);
+                obj.insertPoint = obj.insertPoint + ln;
+                
+            else 
+                
+                TrigMin = obj.plotHandle(1).XData(end);
+                for ii = 1:nchans
+                    obj.plotHandle(ii).YData(1:obj.displayPoints-ln) = obj.plotHandle(ii).YData(d:obj.displayPoints-ln-1+d);
+                    obj.plotHandle(ii).YData(obj.displayPoints-ln+1:obj.displayPoints) = dataChunk(ii,:);
+                    obj.plotHandle(ii).XData = obj.plotHandle(ii).XData + (d./obj.sampleRate);
+                end
+
+                obj.scrolling = true;
             end
-            %hide any extre xlines.  Hiding should be faster than deleting
-            %an recreating later
-            for jj = ii+1 : nMarkerHandles
-                obj.EventMarkerHandles(jj).Visible = false;
+            
+            if ~isempty(trigLocations)
+                for ii = 1:length(trigLocations)
+                    xp = TrigMin + (trigLocations(ii)/obj.sampleRate);
+                    line(obj.ax, [xp, xp], obj.ax.YLim, 'Color', 'r', 'Tag', 'trigger');
+                    if plotText
+                        text(obj.ax, xp, obj.ax.YLim(2), num2str(eventChunk(trigLocations(ii)+1)), 'VerticalAlignment','top', 'Tag', 'trigtext');
+                    end
+
+                end
             end
 
             if ~autoScale
                 obj.ax.YLim = plotRange;
             end
             drawnow();            
-
         end
     end
     methods (Access = private)
-        function onsetOffset = findTriggerOnsets(~,eventChunk)
+        function onsetOffset = findTriggerOnsets(obj, eventChunk)
             
-            onsetOffset = find(diff(eventChunk)>0)+1;
-%            if ~isempty(onsetOffset)
-%                for ii = length(onsetOffset):-1:1
-%                    if eventChunk(onsetOffset(ii)+1)== 0
-%                        onsetOffset(ii) = [];
-%                    end
-%                end
-%            end
+            onsetOffset = find(diff(eventChunk));
+            if ~isempty(onsetOffset)
+                for ii = length(onsetOffset):-1:1
+                    if eventChunk(onsetOffset(ii)+1)== 0
+                        onsetOffset(ii) = [];
+                    end
+                end
+            end
 
         end
     end
