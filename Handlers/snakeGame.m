@@ -15,20 +15,20 @@ function p = analyze(obj, p, dStruct)
     
     %smooth the data and remove the baseline
     data = smoothdata(dStruct.EEG, 2, 'movmean', 10);
-    data = data - 100;
+    %data = data - 100;
     
     %assume looking to the middle
     p.BCI_State = 'Center';
 
     %detect the peaks 
-    p.PeakDetect = p.PeakDetect.Detect(data, 0);
+    p.PeakDetect = p.PeakDetect.Detect(data,0);
     
     if ~isempty(p.PeakDetect.Peaks) %only do this if there are peaks
         
         for ii = 1:length(p.PeakDetect.Peaks) %loop through each peak
             
             %should ignore any peak that is too close to the last one
-            if ~isempty(p.lastPeak) && p.PeakDetect.Peaks(ii).absindex - p.lastPeak.absindex < 192
+            if ~isempty(p.lastPeak) && p.PeakDetect.Peaks(ii).absindex - p.lastPeak.absindex < 90
               continue;
             else
               p.lastPeak = p.PeakDetect.Peaks(ii);
@@ -53,7 +53,7 @@ function p = analyze(obj, p, dStruct)
         end
     end
 
-    p.Chart =  p.Chart.UpdateChart(data, event, [-1, 1]);
+    p.Chart =  p.Chart.UpdateChart(data, event, [-1000, 1000]);
     p.Snake = p.Snake.Move(p.BCI_State);
 
 end
@@ -82,15 +82,15 @@ function p = initialize(p)
     ax.HitTest = "off";
     ax.PickableParts = "none";
 
-    p.Chart = BYB_Chart(p.sampleRate,5, ax);
-    p.PeakDetect = BYB_Peaks(0.15, 10, 10, false, true);
+    p.Chart = BCI_Chart(p.sampleRate,5, ax);
+    p.PeakDetect = BCI_Peaks("AmpThreshold",200, "WidthThreshold",5, "SmoothPoints",5, "AdjustThreshold",true, "SearchAcrossChunks",true);
    
     p.BCI_State = 'Center';
     p.lastPeak = [];
     
    
     ax = uiaxes('Parent', p.handles.outputFigure, 'Position',[510, 10, 480,580]);
-    p.Snake = BYB_Snake(ax);
+    p.Snake = BCI_Snake(ax);
 
 
 end

@@ -9,20 +9,19 @@ end
 %this function gets called when data is passed to the handler
 function p = analyze(~, p, dStruct)
 
-    peaks = zeros(size(dStruct.EEG));
+    peaks = [];
     data = dStruct.EEG;
-   % data = p.BPFilt.filter(dStruct.EEG);
     data = (data.^2)./(600^2);
     p.PeakDetect = p.PeakDetect.Detect(data, 0);
     if ~isempty(p.PeakDetect.Peaks)
-        peaks = [p.PeakDetect.Peaks.index];
+        peaks = [p.PeakDetect.Peaks.index]
         for ii = 1: length(p.PeakDetect.Peaks)
             p.HBeatIndex(1:end-1) = p.HBeatIndex(2:end);
             p.HBeatIndex(end) = p.PeakDetect.Peaks(ii).absindex;
         end
     end
    
-    p.Chart =  p.Chart.UpdateChart(dStruct.EEG, [], [-400, 800]);
+    p.Chart =  p.Chart.UpdateChart(dStruct.EEG, [], [-800, 800]);
     p.ProcessedChart = p.ProcessedChart.UpdateChart(data, peaks, [-.1, 2]);
 
     %calculate the RRInterval for the 60 samples

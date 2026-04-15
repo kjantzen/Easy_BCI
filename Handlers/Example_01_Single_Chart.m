@@ -12,7 +12,7 @@ end
 % this function gets called when data is passed to the handler
 function p = analyze(obj,p,data)
    %add the current data to the chart and scale between +- 650 uV
-   p.Chart =  p.Chart.UpdateChart(data.EEG, data.Event, [-700, 700]);
+   p.Chart =  p.Chart.UpdateChart(data.EEG, data.Event, [-1000, 1000]);
 end
 
 % **************************************************************************

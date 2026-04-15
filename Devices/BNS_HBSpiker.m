@@ -129,7 +129,7 @@ classdef BNS_HBSpiker < handle
 
         % SampleRate - the sampling frequeny determined by the BNS_HBSpiker
         % firmware
-        SampleRate = 500;
+        SampleRate = 250;
     end
     methods (Access = public)
         function obj = BNS_HBSpiker(varargin)

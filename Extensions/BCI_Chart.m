@@ -131,7 +131,7 @@ classdef BCI_Chart < handle
             %Negative indexes indicate that the event was in a previous
             %data chunk which can happen with the peak picking algorithm
             offset = obj.EventBuffer.WritePosition-1;
-            for ii = trigLocations(trigLocations<0)
+            for ii = eventChunk(eventChunk<=0)
                 obj.EventBuffer.SetValue(offset + ii, 1);
             end
             

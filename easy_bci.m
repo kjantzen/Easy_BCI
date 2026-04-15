@@ -86,6 +86,18 @@ end
 %************************************************************************
 function callback_initButton(src, ~, fig)
 
+
+    %change button states to an unable condiiton
+
+    p.handles.button_start.Enable = 'off';
+    p.handles.button_stop.Enable = 'off';
+    p.handles.collect_status.Text = 'Initializing';
+    p.handles.collect_status.FontColor = [0,.5,0];
+
+    %update the display
+    drawnow;
+
+
     %get the data structure from the figures user data
     p = fig.UserData;
     p = initializeParameters(p, fig); 
