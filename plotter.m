@@ -399,7 +399,7 @@ function addPaths()
     [fpath, fname, ~] = fileparts(f);
     newPaths{1} = sprintf('%s%sDevices', fpath, filesep);
     newPaths{2} = sprintf('%s%sExtensions', fpath, filesep);
-    newPaths{2} = sprintf('%s%sTools', fpath, filesep);
+    newPaths{3} = sprintf('%s%sTools', fpath, filesep);
     
     
     s       = pathsep;
