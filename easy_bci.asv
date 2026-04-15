@@ -275,7 +275,7 @@ end
 % *************************************************************************
 function callback_newHandlerFile(~, ~)
     options.WindowStyle = 'normal';
-    scriptName  = inputdlg('Provde a unique name for the new data handler', 'New Handler',[1,90],"", options);
+    scriptName  = inputdlg('Provde a unique name for the new data handler', 'New Handler',[1,45],[], options);
     if ~isempty(scriptName{1})
         makeNewDataHandlerFromTemplate(scriptName{1});
     end    
