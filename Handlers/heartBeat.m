@@ -9,13 +9,14 @@ end
 %this function gets called when data is passed to the handler
 function p = analyze(~, p, dStruct)
 
+    
     peaks = [];
     data = dStruct.EEG;
-    data = (data.^2)./(600^2);
-    p.PeakDetect = p.PeakDetect.Detect(data, 0);
-    if ~isempty(p.PeakDetect.Peaks)
-        peaks = [p.PeakDetect.Peaks.index]
-        for ii = 1: length(p.PeakDetect.Peaks)
+    data = (data.^2)./(600^2); %square the data and scale it to a max of just over 1.
+    p.PeakDetect = p.PeakDetect.Detect(data); %find peaks
+    if p.PeakDetect.NPeaks > 0
+        peaks = [p.PeakDetect.Peaks.index];
+        for ii = 1: p.PeakDetect.NPeaks
             p.HBeatIndex(1:end-1) = p.HBeatIndex(2:end);
             p.HBeatIndex(end) = p.PeakDetect.Peaks(ii).absindex;
         end
@@ -32,8 +33,6 @@ function p = analyze(~, p, dStruct)
     HRV = round(std(RRInterval * 1000));
     p.handles.HR.Text = sprintf('%i BPM', HR);
     p.handles.HRV.Text = sprintf('%i msec.', HRV);
-    
-
 end
 
 %this function gets called when the analyse process is initialized
@@ -97,11 +96,11 @@ function p = initialize(p)
 
     %create a peak detection object
     p.PeakDetect = BCI_Peaks("AmpThreshold",.5, "SmoothPoints",5 ...
-        , "WidthThreshold",10, "AdjustThreshold",true, "SearchAcrossChunks",true);
+        , "WidthThreshold",5, "AdjustThreshold",true, "SearchAcrossChunks",true);
     %create a lowpass filter
     p.BPFilt = BCI_Filter(p.sampleRate, [0, 20], 'low');
         
     %initialize a variable to hold information about when a peak occured
-    p.HBeatIndex = zeros(1,30);
+    p.HBeatIndex = zeros(1,30); %average 30 heart beasts to get an average
 
 end

@@ -4,7 +4,7 @@
 %the appropriate sub function is then called
 %this allows for the creation of any number of single file handlers that
 %can be selected as a single file from a user menu or other interface
-function outStruct = Example_02_Single_Chart_And_FFT(inStruct, varargin)
+function outStruct = Example_05_DarkMode(inStruct, varargin)
 
 %the initializer is called with only one input variable
     if nargin == 1
@@ -18,19 +18,26 @@ end
 %this function gets called when data is passed to the handler
 function p = analyze(obj,p, dStruct)
     p.chartPlot.UpdateChart(dStruct.EEG, dStruct.Event);  
+    p.chartPlot.Line.Color = p.plotColors(p.currPlotColor,:);
+    p.currPlotColor = p.currPlotColor + 1;
+    if p.currPlotColor > 14; p.currPlotColor = 1; end
     p.fftPlot.UpdateChart(dStruct.EEG, 'FreqRange', [0, 100]);
 end
 
 %% this is the funciton that initializes the display and the analysis stream
 % this is where you would add new objects that you want to use to plot or
 % analyze your data chunks as they are being collected
-    function p = initialize(p)
+function p = initialize(p)
     %p = initializeProcessesing(p) 
     %initializes the BCI analysis and plotting stream prior to the onset of
     %data collection.  It accepts a structure containing the programs
     %parameters and returns an updated and saved version of the parameters.
     %Use this function to initialize any analysis functions you want to add to
     %your BCI
+
+    BACKCOLOR = [0,0,0];
+    TEXTCOLOR = [1,1,1];
+    LINECOLOR = [1,.75,0];
 
     %THIS SECTION INITIALIZES THE DISPLAY
     %check to see if the figure already exists
@@ -46,9 +53,12 @@ end
         %name it so we can recognize it later if the software is rerun
         p.handles.outputFigure.Name  = 'easy bci chart and fft example';
         p.handles.outputFigure.Tag = 'chart and fft';
+        p.handles.outputFigure.Color = BACKCOLOR;
     end
         
-    p.handles.outputFigure.Position = [200,200,800,800];
+    p.handles.outputFigure.Position = [200,100,800,800];
+    p.plotColors = rainbow;
+    p.currPlotColor = 1;
 
     %create a plotting object to plot the raw time signal
     %*****************************************************
@@ -62,7 +72,12 @@ end
     sp.XLabel.String  = 'Time (seconds)';
     sp.YLabel.String = 'amplitude (uV units)';
     sp.FontSize = 14;
+    sp.XColor = TEXTCOLOR;
+    sp.YColor = TEXTCOLOR;
+    sp.Color  = BACKCOLOR;
     sp.XLimitMethod = 'tight';
+    sp.ColorOrder = LINECOLOR;
+
     
     %these settings are helpful because they keep the mouse from
     %interfering wiht the plotting.
@@ -81,7 +96,10 @@ end
     sp.FontSize = 14;
     sp.XLabel.String = 'Frequency (Hz)';
     sp.YLabel.String = 'Power (uV^2)';
-    sp.ColorOrder(1,:) = [1,0,0];
+    sp.ColorOrder = LINECOLOR;
+    sp.XColor = TEXTCOLOR;
+    sp.YColor = TEXTCOLOR;
+    sp.Color  = BACKCOLOR;
 
     %these settings are helpful because they keep the mouse from
     %interfering wiht the plotting.
@@ -95,4 +113,9 @@ end
     FFT_length = 1;
     p.fftPlot = BCI_FFTPlot(p.sampleRate, "AxisHandle",sp, "BufferSeconds", FFT_length);  
     
+ end
+function colors = rainbow()
+    colors = [1.0, 0.0, 0.0;1.0, 0.5, 0.0;1.0, 1.0, 0.0;0.0, 1.0, 0.0;0.0, 0.0, 1.0;0.3, 0.0, 0.5;0.6, 0.0, 1.0];
+    colors = [colors; fliplr(colors)];
+
 end

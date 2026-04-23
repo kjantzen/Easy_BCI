@@ -1,7 +1,7 @@
 % Example of a basic easy bci data handler 
 %The main landing funciton is a wrapper to allow for selection of the
 %constructor or the data callback
-function outStruct = SingleChart_Example(inStruct, varargin)
+function outStruct = Example_01_Single_Chart(inStruct, varargin)
 	if nargin == 1
 		outStruct = initialize(inStruct);
 	else

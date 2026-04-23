@@ -232,7 +232,7 @@ fprintf(fid, '\tif nargin == 1\n');
 fprintf(fid, '\t\toutStruct = initialize(inStruct);\n');
 fprintf(fid, '\telse\n\t\toutStruct = analyze(inStruct, varargin{1}, varargin{2});\n\tend\nend\n');
 fprintf(fid, '%%this function gets called when data is passed to the handler\n');
-fprintf(fid, 'function p = analyze(p,data, event)\n\n\t%%your analysis code goes here\nend\n');
+fprintf(fid, 'function p = analyze(obj,p,data)\n\n\t%%your analysis code goes here\nend\n');
 fprintf(fid, '%%this function gets called when the handler is initialized\n');
 fprintf(fid, 'function p = initialize(p)\n\n%%your initialization code goes here\n\nend\n');
 

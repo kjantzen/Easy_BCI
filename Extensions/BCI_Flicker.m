@@ -3,7 +3,7 @@ classdef BCI_Flicker < handle
 % front end of a brain computer interface.
 %
 % obj = BCI_FLicker() creates a full screen presentation of the flicker
-% stimuli presnted at a size of 100x100 pixels
+% stimuli presented at a size of 100x100 pixels
 %
 % The following parameters can be passed
 %   'WindowPosition'=[left, right, width, height] - default fullscreen

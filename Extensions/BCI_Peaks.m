@@ -86,13 +86,13 @@
 classdef BCI_Peaks < handle
     properties 
         AmpThreshold = 100;
-        WidthThreshold = 10;    %default of +- 10 pnts
+        WidthThreshold = 5;    %default of +- 10 pnts
         SmoothPoints = 0;
         AdjustThreshold = false;
         SearchAcrossChunks = true;
         ChunkMemory = 3;
         Peaks = [];
-        FoundPeaks = false;
+        NPeaks = 0;
         RemoveBaseline = false;
         IndexCount = uint64(0); %the cumulative count of indexes reviewed
 
@@ -120,7 +120,7 @@ classdef BCI_Peaks < handle
            
         end
     
-        function obj = Detect(obj, data, baseline)
+        function obj = Detect(obj, data)
             %the peak detection method
             %INPUT:
             % data - a real valued vector in which to search for peaks
@@ -130,6 +130,12 @@ classdef BCI_Peaks < handle
             %   vector before searching,  If baseline is excluded the
             %   median of the data will be used
             %
+
+            dlen = length(data);
+            ww = obj.WidthThreshold * 2;
+            if dlen < ww
+                error('The length of the data segment my be larger than twice the window width (%i)', ww)
+            end
             if obj.RemoveBaseline
                 baseline = median(data);
             else 
@@ -144,9 +150,9 @@ classdef BCI_Peaks < handle
             else
                 %combine the last part of the data that could not be
                 %evaluated on the last run to make sure no peaks are missed
-                indx = length(obj.Buffer) -  obj.WidthThreshold * 2;
+                indx = length(obj.Buffer) -  ww;
                 tempBuffer = horzcat(obj.Buffer(indx:end), data);
-                indexCorrection = obj.WidthThreshold * 2;
+                indexCorrection = ww;
             end
             %set the object buffer to store the current data in case it
             %needs to be combined with the next chunk
@@ -171,39 +177,41 @@ classdef BCI_Peaks < handle
             end
 
             %find any peaks
-            obj.Peaks = obj.findPeaks(tempBuffer,actualThreshold, indexCorrection);
-            if ~isempty(obj.Peaks)
-                obj.FoundPeaks = true;
+            [nPeaks, obj.Peaks] = obj.findPeaks(tempBuffer,actualThreshold, indexCorrection);
+            obj.NPeaks = nPeaks;
+            if nPeaks > 0
+               %add the baseline back into adjusted value
+               for ii = 1:nPeaks
+                    obj.Peaks(ii).value = obj.Peaks(ii).adjvalue + baseline;
+                end
+
             else
-                obj.FoundPeaks = false;
             end
             obj.IndexCount = obj.IndexCount + length(data);
 
-            
-            %add the baseline back into adjusted value
-            if ~isempty(obj.Peaks)
-                for ii = 1:length(obj.Peaks)
-                    obj.Peaks(ii).value = obj.Peaks(ii).adjvalue + baseline;
-                end
-            end
         end 
     end
     methods (Access = private)
-        function peaks = findPeaks(obj, input, ampThresh, indexCorrection)        
+        function [nPeaks, peaks] = findPeaks(obj, input, ampThresh, indexCorrection)        
             %to find the peaks we will loop over all values that exceed the
             %threshold and determine if there is a value within the width 
             % threshold distance that is greater. If not we have found a
             % peak
             
+            ln = length(input);
             absInput = abs(input);
 
             minPosition = obj.WidthThreshold;
-            maxPosition = length(absInput) - obj.WidthThreshold;
+            maxPosition = ln - obj.WidthThreshold;
        
-            peaks = [];
-            
+            %allocate the peaks array for speed
+            peaks(ln).absindex = 0; 
+            peaks(ln).index = 0;
+            peaks(ln).adjvalue = 0;
+
+            nPeaks = 0;
+
             %initialize a counter for where to look in the possible peak
-            %indexes array (ppi)
             ii = minPosition+1;
 
             while ii < maxPosition
@@ -222,11 +230,17 @@ classdef BCI_Peaks < handle
                 indx = indx + min(searchPoints) -1; %index of peak in full data array
                 %if the current point is the maximum then it is a peak
                 if any(indx == ii)
-                    peak.absindex = obj.IndexCount + ii;  %adjust the index so it is the total offset across segments
-                    peak.index = ii - indexCorrection;
-                    peak.adjvalue = input(ii);
+                    nPeaks = nPeaks + 1;
+                    peaks(nPeaks).absindex = obj.IndexCount + ii;  %adjust the index so it is the total offset across segments
+                    peaks(nPeaks).index = ii - indexCorrection;
+                    peaks(nPeaks).adjvalue = input(ii);
+
+                    %peak.absindex = obj.IndexCount + ii;  %adjust the index so it is the total offset across segments
+                    %peak.index = ii - indexCorrection;
+                    %peak.adjvalue = input(ii);
                     ii = ii + obj.WidthThreshold;
-                    peaks = [peaks, peak];
+                    %peaks = [peaks, peak];
+                    %nPeaks = nPeaks + 1;
                 else
                     %if the current point is not the maximum, move to the
                     %maximum point and try again
@@ -236,9 +250,12 @@ classdef BCI_Peaks < handle
                         ii = ii + 1;
                     end
                 end
-                
             end
-
+            if nPeaks == 0
+                peaks = [];
+            elseif nPeaks < ln
+                peaks(nPeaks+1:ln) = [];
+            end
         end
     end
 end

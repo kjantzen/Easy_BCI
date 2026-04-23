@@ -17,6 +17,7 @@
 %   pass data to the functions UpdateChart method to add data to
 %   the plot
 %
+% 
 % Methods
 %
 %   chart = chart.UpdateChart(eeg, event) - updates the chart adding the
@@ -29,15 +30,16 @@
             %
 classdef BCI_Chart < handle
     properties 
-        scrolling       %flag to know whether the plot is srolling yet
-        insertPoint     %the current place that data is being inserted into the plot
-        plotHandle      %the handle to the actual plot
-
-        displaySeconds  %the number of seconds to display in the plot
-        displayPoints   %the number of points to display in the plot
-        tAxis           %the current time axis to display
-        sampleRate
-        ax
+        Line      %the handle to the actual plot
+    end
+    properties (SetAccess = private)
+        DisplaySeconds  %the number of seconds to display in the plot
+        DisplayPoints   %the number of points to display in the plot
+        TimeAxis           %the current time axis to display
+        SampleRate
+        Axes  
+        LineData
+        EventData
     end
     properties (Access = private)
         EventMarkerHandles = gobjects(0);
@@ -56,23 +58,20 @@ classdef BCI_Chart < handle
                 f.Color = 'w';
                 plotAxis = axes(f);
             end
-            obj.displaySeconds = ChartLength;
-            obj.sampleRate = SampleRate;
+            obj.DisplaySeconds = ChartLength;
+            obj.SampleRate = SampleRate;
             
-            %obj.scrolling = false;
-            %obj.insertPoint = 1;
-            obj.displayPoints = obj.displaySeconds * SampleRate;
-            obj.tAxis = (1:obj.displayPoints)./SampleRate;
-            h1 = line(plotAxis, obj.tAxis, zeros(1,obj.displayPoints));
-            obj.plotHandle =h1; %[h1, h2];
-            obj.plotHandle(1).LineWidth = 1;
+            obj.DisplayPoints = obj.DisplaySeconds * SampleRate;
+            tAxis = (1:obj.DisplayPoints)./SampleRate;
+            obj.Line = line(plotAxis, tAxis, zeros(1,obj.DisplayPoints));
+            obj.Line(1).LineWidth = 1;
             
-            obj.ax = plotAxis;
+            obj.Axes = plotAxis;
 
             %create circular data buffers.  One for the data and one for
             %the events.
-            obj.DataBuffer = BCI_CircBuffer("SampleRate",SampleRate, "BufferSamples", obj.displayPoints);
-            obj.EventBuffer = BCI_CircBuffer("SampleRate",SampleRate, "BufferSamples", obj.displayPoints);
+            obj.DataBuffer = BCI_CircBuffer("SampleRate",SampleRate, "BufferSamples", obj.DisplayPoints);
+            obj.EventBuffer = BCI_CircBuffer("SampleRate",SampleRate, "BufferSamples", obj.DisplayPoints);
                 
         end
         function obj = UpdateChart(obj, eegChunk, eventChunk,  plotRange)
@@ -109,6 +108,16 @@ classdef BCI_Chart < handle
           
             if isempty(plotRange)
                 autoScale = true;
+                mx = max(obj.DataBuffer.Buffer);
+                mn = min(obj.DataBuffer.Buffer);
+                margin = (mx-mn) * .1;
+                mx = mx + margin;
+                mn = mn - margin;
+                if (mx == 0 && mn == 0)
+                    plotRange = [-1,1];
+                else
+                    plotRange = [mn,mx];
+                end
             else
                 autoScale = false;
             end
@@ -140,10 +149,10 @@ classdef BCI_Chart < handle
             obj.EventBuffer.WriteBuffer(trigLocations);
             
             %update the plot y data with the new ordered data
-            obj.plotHandle.YData = obj.DataBuffer.Buffer;
+            obj.Line.YData = obj.DataBuffer.Buffer;
 
             %update the time axis information data
-            obj.plotHandle.XData = obj.DataBuffer.TimeAxis;
+            obj.Line.XData = obj.DataBuffer.TimeAxis;
 
             %update the event markers
             eventIndx =  find(obj.EventBuffer.Buffer);
@@ -160,42 +169,55 @@ classdef BCI_Chart < handle
             if ~isempty(eventIndx)
                 for ii = 1:length(eventIndx)
                     if ii <= nMarkerHandles
-                        obj.EventMarkerHandles(ii).Value = tData(eventIndx(ii));
-                        obj.EventMarkerHandles(ii).Label = obj.EventBuffer.Buffer(eventIndx(ii));
+                        obj.EventMarkerHandles(ii).XData = [tData(eventIndx(ii)),tData(eventIndx(ii))];
+                        %obj.EventMarkerHandles(ii).Label = obj.EventBuffer.Buffer(eventIndx(ii));
                         obj.EventMarkerHandles(ii).Visible = true;
                     else
-                        obj.EventMarkerHandles(ii) = xline(obj.ax, tData(eventIndx(ii)),'Color','r','Label', obj.EventBuffer.Buffer(eventIndx(ii)));
+                        obj.EventMarkerHandles(ii) = line(obj.Axes, "XData", [tData(eventIndx(ii)), tData(eventIndx(ii))],...
+                            'YData',plotRange, 'Color','r');
+                        
                     end
                 end
 
             else
                 ii = 0;
             end
-            %hide any extre xlines.  Hiding should be faster than deleting
-            %an recreating later
-            for jj = ii+1 : nMarkerHandles
-                obj.EventMarkerHandles(jj).Visible = false;
+
+            if nMarkerHandles < 5
+                %hide any extre xlines.  Hiding should be faster than deleting
+                %an recreating later
+                for jj = ii+1 : nMarkerHandles
+                    obj.EventMarkerHandles(jj).Visible = false;
+                end
+            else
+                for jj = nMarkerHandles:-1: ii+1
+                    delete(obj.EventMarkerHandles(jj));
+                    obj.EventMarkerHandles(jj) = [];
+                end
             end
 
             if ~autoScale
-                obj.ax.YLim = plotRange;
+                obj.Axes.YLim = plotRange;
             end
             drawnow();            
 
         end
+
+        % getters for exposing data to the user
+        function value = get.LineData(obj)
+            value = obj.DataBuffer.Buffer;
+        end
+        function value = get.EventData(obj)
+            value = obj.EventBuffer.Buffer;
+        end
+        function value = get.TimeAxis(obj)
+            value = obj.DataBuffer.TimeAxis;
+        end
     end
+    % private methods
     methods (Access = private)
         function onsetOffset = findTriggerOnsets(~,eventChunk)
-            
             onsetOffset = find(diff(eventChunk)>0)+1;
-%            if ~isempty(onsetOffset)
-%                for ii = length(onsetOffset):-1:1
-%                    if eventChunk(onsetOffset(ii)+1)== 0
-%                        onsetOffset(ii) = [];
-%                    end
-%                end
-%            end
-
         end
     end
 end
