@@ -1,2 +1,3 @@
-*.asv
-*.dat
+# MATLAB temp save files
+.asv
+
