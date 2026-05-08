@@ -16,7 +16,7 @@ classdef BCI_Snake < handle
         Snake;
         SuccessSignal = struct(Color = "#00FF00", NFlashes = 3, FlashInterval = .25);
         FailSignal = struct(Color = "#FF0000", NFlashes = 3, FlashInterval = .25);
-        SuccessLength = 40;
+        
     end
     properties (Access = private)   
         Limits = [0,0,100,100];
@@ -127,10 +127,6 @@ classdef BCI_Snake < handle
             obj.Axis.XLim = [obj.Limits(1),obj.Limits(3)];
             obj.Axis.YLim = [obj.Limits(2),obj.Limits(4)];
             %return the state to a running one unless the game ended
-            if (obj.SnakeLength > obj.SuccessLength)
-                obj.InternalState = obj.SUCCESS;
-                success(obj);
-            end
             if (obj.InternalState == obj.BUSY)
                 obj.InternalState = obj.RUNNING;
             end
