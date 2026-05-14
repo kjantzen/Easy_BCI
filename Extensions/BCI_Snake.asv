@@ -1,9 +1,9 @@
-%BCI_Snake - an object for running a basic snake game
+%BYB_Snake - an object for running a basic snake game
 %
 %Creates and updates the position of a snake drawn as a set of colored
 %circles in an a Matlab axis. 
 %
-%mySnake = BCI_Snake(ax) - initializes a new instance of the snake game 
+%mySnake BYB_Snake(ax) - initializes a new instance of the snake game 
 % call mySnake the will be drawn in the matlab axis ax.  The snake is a
 % train of dots that are drawn into the axis.  The position of the dots is
 % updated on each call to the Move method.  The length of the snake is
@@ -203,8 +203,8 @@ classdef BCI_Snake < handle
             end
 
 
-            speedFactor = 1/toc(lastTurnTime); %penalize score for not turning often
-            obj.Score = obj.Score + round(10 * obj.SnakeLength * speedFactor);
+            speedFactor = 1/toc(obj.LastTurnTime);
+            obj.Score = obj.Score + (10 * obj.SnakeLength * speedFactor);
             obj.HighScore = max(obj.Score, obj.HighScore);
             if obj.isSelfCollision(obj.SnakeDataX, obj.SnakeDataY)
                 fail(obj);

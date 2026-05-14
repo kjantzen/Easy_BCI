@@ -26,7 +26,7 @@ while running
     if snakeGame.SnakeState == 2 %this is the ready state
         haveInputFlag = false;
         snakeGame.Move(direction);
-        a.Title.String = sprintf("Score: %i,  Highscore: %i", snakeGame.Score, snakeGame.HighScore);
+        a.Title.String = sprintf("Score: %i,  Highscore: %i Length: %i", snakeGame.Score, snakeGame.HighScore, snakeGame.SnakeLength);
         if haveInputFlag == false
             direction = 'Center';
         end
@@ -39,6 +39,7 @@ while running
                 pause(1)
                 snakeGame.Reset()
                 snakeGame.Start()
+                direction = "Center";
             case 'No'
                 running = false;
         end

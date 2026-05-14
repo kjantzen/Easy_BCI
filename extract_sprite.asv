@@ -1,0 +1,10 @@
+file = "~/Documents/Easy_BCI/Sprite1.png";
+
+im = imread(file);
+
+f = figure
+a = axes(f)
+imshow(im)
+
+skater = im(5:117, :100,:);
+imshow(skater)

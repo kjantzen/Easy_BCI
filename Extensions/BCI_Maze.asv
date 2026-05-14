@@ -59,15 +59,10 @@
 %   If dir='Left' the running direction will rotatate left 90 degrees (e.g. change from moving  
 %   North to West) and if dir='Right' the runner direction will rotate 
 %   right 90 degrees (e.g. change from moving West to moving North).  
-%   If dir is any value other than 'Left' or 'Right' the snake will continue 
-%   in its current direction.
+%   If dir is any other value
+%   the snake will continue in its current direciton.
 %
-%   NewMaze() -> generate a new random maze with using the current values
-%   of MazeRows and MazeColumns.  To change the Maze dimensions, update th
-%   evalues of MazeRows and/or MazeColumns prior to calling NewMaze. Calls
-%   to NewMaze are ignored if the Maze state is RUNNING.
-%
-% See also BCI_Snake, easy_bci
+% See also scatter, BCI_Maze, easy_bci
 classdef BCI_Maze < handle
     properties
         Axes

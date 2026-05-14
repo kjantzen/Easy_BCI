@@ -28,7 +28,7 @@ while running
     elseif mazeGame.InternalState == 2 %win
        
        a.Title.String = sprintf("You finished in %0.2f Seconds", mazeGame.CompletionTime);
-       mazeGame.MazeRows = mazeGame.MazeRows + 1;
+       mazeGame.MazeRows = mazeGame.MazeRows;
        mazeGame.MazeColumns = mazeGame.MazeColumns + 1;
        mazeGame.NewMaze;
        mazeGame.Reset;
